@@ -1,7 +1,7 @@
 # Azure Infrastructure Operations Project: Deploying a scalable IaaS web server in Azure
 
 ## Introduction
-This project will deploy a set number of virtual machines (default is 3) behind a load balancer, and set up all the other resources that need to be deployed for those virtual machines such as network security groups do the VM's are only accessible through the internal network, Virtual Networks, Subnets, Virtual Nics and more.
+This project will deploy a set number of virtual machines (default is 3) behind a load balancer, and set up all the other resources that need to be deployed for those virtual machines such as network security groups so the VM's are only accessible through the internal network, Virtual Networks, Subnets, Virtual Nics and more.
 
 ## Dependencies
 1. Create an [Azure Account](https://portal.azure.com) 
@@ -11,25 +11,38 @@ This project will deploy a set number of virtual machines (default is 3) behind 
 
 ### Getting Started
 1. Clone this repository
-2. Modify the packer file
-3. Modify terraform variable files if necessary
+2. Create environment variables
+3. Modify the packer file
+4. Modify terraform variable files if necessary
 
 
 
 ## Instructions
 ### Packer
-1. Modify the packer file (server.json) so the image builds in your perferred region.
-2. Open on your terminal and add the following environment variables
+1. Log in to your Azure subscription and create a resource group for your image.
+
+2. Modify the packer file (server.json) so the image builds in your perferred region, and modify it to include the resource group name you made in step 1.
+
+3. Open on your terminal and add the following environment variables
 - ARM_CLIENT_ID
 - ARM_CLIENT_SECRET
 - ARM_SUBSCRIPTION_ID
-3. You can add the environment variable for windows like so in the powershell terminal. `$env:AZURE_RESOURCE_GROUP = 'MyTestResourceGroup'`
 
-These variables are used to connect to your subscription on Azure.
-*note:* that these variables are only there for the live time of the terminal if you would like to make thme permant you will have to look up the documentation for your operating system.
+These variables are used to connect to your subscription on Azure. Below are examples of adding enviroment variables to your terminal and os of choice.
 
-4. Log in to your Azure subscription and create a resource group for your image.
-5. Once all of the above steps are completed you can now run the command `packer build` to build your server image. This may take a while so grab a cup of tea.
+#### Windows
+Example: `$env:ARM_CLIENT_ID = '0000000-0000-0000-0000-000000000000'`
+
+#### Mac OS
+Example: `export ARM_CLIENT_ID='0000000-0000-0000-0000-000000000000'`
+
+#### Linux
+Example: `ARM_CLIENT_ID='0000000-0000-0000-0000-000000000000'`
+
+
+*Note:* These variables are only there for the live time of the terminal if you would like to make thme permant you will have to look up the documentation for your operating system.
+ 
+4. Once all of the above steps are completed you can now run the command `packer build` to build your server image. This may take a while so grab a cup of tea.
 
 ### Terraform
 The terraform file creates these resources listed below
@@ -44,9 +57,13 @@ The terraform file creates these resources listed below
 - Linux  virtual machines (3 by default)
 - 1 managed disk per instance
 1. Run `terraform init` to prepare your directory for terraform
+
 2. Modify the `variable.tf` file if necessary, this contains the variables for the resource group name, prefix for most resources, number of vm's to create, and location. If number of VM's and Location are not specified they will default to `3` instances and `Canada East` respectively.
+
 3. Review the `main.tf` to confirm that is creating the correct resources for your needs.
+
 4. You can now run `terraform plan` to show the changes terraform will be making. Once comfortable you can now `terraform apply` to apply those changes and have terraform deploy those resources.
+
 5. If you no longer need the resources go ahead and run `terraform destory` this will remove all the resources in this script.
 
 

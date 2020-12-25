@@ -2,11 +2,13 @@ provider "azurerm" {
   features {}
 }
 
+#get the image that was create by the packer script
 data "azurerm_image" "web" {
   name                = "udacity-server-image"
   resource_group_name = var.resource_group
 }
 
+#create the resource group specificed by the user
 resource "azurerm_resource_group" "main" {
   name     = var.resource_group
   location = var.location
@@ -31,6 +33,7 @@ resource "azurerm_network_security_group" "main" {
   location            = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
 
+  #rule for internal inbound network traffic
   security_rule {
     name                       = "Internal_In"
     priority                   = 100
@@ -43,6 +46,7 @@ resource "azurerm_network_security_group" "main" {
     destination_address_prefixes = azurerm_subnet.main.address_prefixes
   }
 
+  #rule for internal outbound network traffic
   security_rule {
     name                       = "Internal_Out"
     priority                   = 110
@@ -55,6 +59,7 @@ resource "azurerm_network_security_group" "main" {
     destination_address_prefixes = azurerm_subnet.main.address_prefixes
   }
 
+  #Deny all external traffic to the VM's
   security_rule {
     name                       = "Deny_External"
     priority                   = 120
@@ -68,6 +73,7 @@ resource "azurerm_network_security_group" "main" {
   }
 }
 
+#create network interfaces for the VM's
 resource "azurerm_network_interface" "main" {
   count               = var.num_of_vms
   name                = "${var.prefix}-${count.index}-nic"
@@ -82,6 +88,7 @@ resource "azurerm_network_interface" "main" {
   }
 }
 
+#create a public IP for the Load Balancer
 resource "azurerm_public_ip" "main" {
 
   name                = "lb-public-ip"
@@ -107,6 +114,7 @@ resource "azurerm_lb_backend_address_pool" "main" {
   name                = "${var.prefix}-lb-backend-pool"
 }
 
+#create a network interface for the Load Balancer
 resource "azurerm_network_interface" "lb" {
   name                = "${var.prefix}-nic"
   resource_group_name = azurerm_resource_group.main.name
@@ -121,7 +129,7 @@ resource "azurerm_network_interface" "lb" {
 }
 
 resource "azurerm_network_interface_backend_address_pool_association" "main" {
-  network_interface_id    = azurerm_network_interface.main.id
+  network_interface_id    = azurerm_network_interface.lb.id
   ip_configuration_name   = "nic-to-backend-pool"
   backend_address_pool_id = azurerm_lb_backend_address_pool.main.id
 }
@@ -146,6 +154,7 @@ resource "azurerm_linux_virtual_machine" "main" {
   network_interface_ids = [element(azurerm_network_interface.main.*.id, count.index)]
   availability_set_id = azurerm_availability_set.main.id
 
+  #use the image we sourced at the beginnng of the script.
   source_image_id = data.azurerm_image.web.id
 
   os_disk {
@@ -160,6 +169,7 @@ resource "azurerm_linux_virtual_machine" "main" {
   }
 }
 
+#create a virtual disk for each VM created.
 resource "azurerm_managed_disk" "main" {
   count                           = var.num_of_vms
   name                            = "data-disk-${count.index}"
