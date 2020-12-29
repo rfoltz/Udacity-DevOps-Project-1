@@ -8,10 +8,24 @@ data "azurerm_image" "web" {
   resource_group_name = var.packer_resource_group
 }
 
+#set the number of network interfaces to build to include one more for the load balancer
+locals {
+  type = "number"
+  num_of_nics = var.num_of_vms + 1
+}
+
 #create the resource group specificed by the user
 resource "azurerm_resource_group" "main" {
   name     = var.resource_group
   location = var.location
+}
+
+resource "azurerm_network_security_group" "main" {
+  name                = "${var.prefix}-nsg"
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+
+  #there are already rules by default to allow traffic to the internal VM's. 
 }
 
 resource "azurerm_virtual_network" "main" {
@@ -28,54 +42,14 @@ resource "azurerm_subnet" "main" {
   address_prefixes     = ["10.0.2.0/24"]
 }
 
-resource "azurerm_network_security_group" "main" {
-  name                = "${var.prefix}-nsg"
-  location            = azurerm_resource_group.main.location
-  resource_group_name = azurerm_resource_group.main.name
-
-  #rule for internal inbound network traffic
-  security_rule {
-    name                       = "Internal_In"
-    priority                   = 100
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "*"
-    source_port_range          = "*"
-    destination_port_range     = "*"
-    source_address_prefixes      = azurerm_subnet.main.address_prefixes
-    destination_address_prefixes = azurerm_subnet.main.address_prefixes
-  }
-
-  #rule for internal outbound network traffic
-  security_rule {
-    name                       = "Internal_Out"
-    priority                   = 110
-    direction                  = "Outbound"
-    access                     = "Allow"
-    protocol                   = "*"
-    source_port_range          = "*"
-    destination_port_range     = "*"
-    source_address_prefixes      = azurerm_subnet.main.address_prefixes
-    destination_address_prefixes = azurerm_subnet.main.address_prefixes
-  }
-
-  #Deny all external traffic to the VM's
-  security_rule {
-    name                       = "Deny_External"
-    priority                   = 120
-    direction                  = "Inbound"
-    access                     = "Deny"
-    protocol                   = "*"
-    source_port_range          = "*"
-    destination_port_range     = "*"
-    source_address_prefix      = "*"
-    destination_address_prefix = "*"
-  }
+resource "azurerm_subnet_network_security_group_association" "main" {
+  subnet_id                 = azurerm_subnet.main.id
+  network_security_group_id = azurerm_network_security_group.main.id
 }
 
 #create network interfaces for the VM's
 resource "azurerm_network_interface" "main" {
-  count               = var.num_of_vms
+  count               = local.num_of_nics
   name                = "${var.prefix}-${count.index}-nic"
   resource_group_name = azurerm_resource_group.main.name
   location            = azurerm_resource_group.main.location
@@ -99,7 +73,7 @@ resource "azurerm_public_ip" "main" {
 
 resource "azurerm_lb" "main" {
   name                = "${var.prefix}-lb"
-  location            = "West US"
+  location            = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
 
   frontend_ip_configuration {
@@ -114,31 +88,18 @@ resource "azurerm_lb_backend_address_pool" "main" {
   name                = "${var.prefix}-lb-backend-pool"
 }
 
-#create a network interface for the Load Balancer
-resource "azurerm_network_interface" "lb" {
-  name                = "${var.prefix}-nic"
-  resource_group_name = azurerm_resource_group.main.name
-  location            = azurerm_resource_group.main.location
-
-  ip_configuration {
-    primary                       = true
-    name                          = "internal"
-    subnet_id                     = azurerm_subnet.main.id
-    private_ip_address_allocation = "Dynamic"
-  }
-}
-
 resource "azurerm_network_interface_backend_address_pool_association" "main" {
-  network_interface_id    = azurerm_network_interface.lb.id
-  ip_configuration_name   = "nic-to-backend-pool"
+  network_interface_id    = azurerm_network_interface.main[(local.num_of_nics - 1)].id
+  ip_configuration_name   = "internal"
   backend_address_pool_id = azurerm_lb_backend_address_pool.main.id
 }
 
 
 resource "azurerm_availability_set" "main" {
-  name                = "${var.prefix}-aset"
-  location            = azurerm_resource_group.main.location
-  resource_group_name = azurerm_resource_group.main.name
+  name                        = "${var.prefix}-aset"
+  location                    = azurerm_resource_group.main.location
+  resource_group_name         = azurerm_resource_group.main.name
+  platform_fault_domain_count = 2
 }
 
 
