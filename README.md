@@ -19,7 +19,7 @@ This project will deploy a set number of virtual machines (default is 3) behind 
 
 ## Instructions
 ### Packer
-1. Log in to your Azure subscription and create a resource group for your image.
+1. Log in to your Azure subscription and create a resource group for your image. The default in the terraform var.json is `udacity-image-rg`
 
 2. Modify the packer file (server.json) so the image builds in your perferred region, and modify it to include the resource group name you made in step 1.
 
@@ -54,11 +54,11 @@ The terraform file creates these resources listed below
 - a public ip
 - load balancer
 - availability set for the virtual machines
-- Linux  virtual machines (3 by default)
+- Linux virtual machines (3 by default)
 - 1 managed disk per instance
 1. Run `terraform init` to prepare your directory for terraform
 
-2. Modify the `variable.tf` file if necessary, this contains the variables for the resource group name, prefix for most resources, number of vm's to create, and location. If number of VM's and Location are not specified they will default to `3` instances and `Canada East` respectively.
+2. Modify the `vars.tf` file if necessary, this contains the variables for the resource group name, prefix for most resources, number of vm's to create, and location. If number of VM's and Location are not specified they will default to `3` instances and `Canada East` respectively. You will need to change the `packer_resource_group` variable if you used a different resource group name for the packer image.
 
 3. Review the `main.tf` to confirm that is creating the correct resources for your needs.
 

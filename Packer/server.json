@@ -16,7 +16,7 @@
         "image_offer": "UbuntuServer",
         "image_sku": "18.04-LTS",
     
-        "managed_image_resource_group_name": "udacity-project1-rg",
+        "managed_image_resource_group_name": "udacity-image-rg",
         "managed_image_name": "udacity-server-image",
     
         "location": "Canada East",
