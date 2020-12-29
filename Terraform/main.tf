@@ -5,7 +5,7 @@ provider "azurerm" {
 #get the image that was create by the packer script
 data "azurerm_image" "web" {
   name                = "udacity-server-image"
-  resource_group_name = var.resource_group
+  resource_group_name = var.packer_resource_group
 }
 
 #create the resource group specificed by the user
