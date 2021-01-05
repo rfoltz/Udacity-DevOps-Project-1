@@ -19,15 +19,29 @@
         "managed_image_resource_group_name": "udacity-image-rg",
         "managed_image_name": "udacity-server-image",
     
-        "location": "Canada East",
+        "location": "Canada Central",
         "vm_size": "Standard_B1ls"
 	}],
-	"provisioners": [{
+	"provisioners": [
+		{
+			"type":"file",
+			"source": "http.service",
+			"destination": "~/http.service"
+		},
+		{
 		"inline": [
+			"apt-get update",
+			"apt-get upgrade -y",
 			"echo 'Hello, World!' > index.html",
-			"nohup busybox httpd -f -p 80 &"
+			"sudo mv http.service /etc/systemd/system",
+			"sudo chown root:root /etc/systemd/system/http.service",
+			"sudo chmod 777 /etc/systemd/system/http.service",
+			"sudo systemctl daemon-reload",
+			"sudo systemctl enable http"
+
 		],
 		"inline_shebang": "/bin/sh -x",
-		"type": "shell"
+		"type": "shell",
+		"execute_command": "chmod +x {{ .Path }}; {{ .Vars }} sudo -E sh '{{ .Path }}'"	
 	}]
 }
