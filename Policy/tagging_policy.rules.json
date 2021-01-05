@@ -3,7 +3,7 @@
       "allof": [
         {
           "field": "type",
-          "equals": "Microsoft.Resources/subscriptions/resourceGroups"
+          "equals": "Microsoft.Compute/virtualMachines"
         },
         {
           "field": "[concat('tags[', parameters('tagName'), ']')]",
