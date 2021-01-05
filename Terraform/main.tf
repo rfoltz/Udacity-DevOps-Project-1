@@ -172,3 +172,8 @@ resource "azurerm_virtual_machine_data_disk_attachment" "main" {
   lun                = 10 * count.index
   caching            = "ReadWrite"
 }
+
+output "lb_url" {
+  value       = "http://${azurerm_public_ip.main.ip_address}/"
+  description = "The IP of the Load Balancer"
+}
