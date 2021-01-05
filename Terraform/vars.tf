@@ -24,6 +24,6 @@ variable "num_of_vms" {
 
 variable "location" {
   description = "The Azure Region in which all resources in this example should be created."
-  default     = "Canada East"
+  default     = "Canada Central"
   type        = string
 }

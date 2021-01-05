@@ -19,7 +19,19 @@ resource "azurerm_network_security_group" "main" {
   location            = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
 
-  #there are already rules by default to allow traffic to the internal VM's. 
+  #there are already rules by default to allow traffic to the internal VM's.
+
+  security_rule {
+    name                       = "HTTP"
+    priority                   = 100
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "8080"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
 }
 
 resource "azurerm_virtual_network" "main" {
@@ -75,6 +87,13 @@ resource "azurerm_lb" "main" {
   }
 }
 
+resource "azurerm_lb_probe" "main" {
+  resource_group_name = azurerm_resource_group.main.name
+  loadbalancer_id     = azurerm_lb.main.id
+  name                = "http-server-probe"
+  port                = 8080
+}
+
 resource "azurerm_lb_backend_address_pool" "main" {
   resource_group_name = azurerm_resource_group.main.name
   loadbalancer_id     = azurerm_lb.main.id
@@ -88,6 +107,17 @@ resource "azurerm_network_interface_backend_address_pool_association" "main" {
   backend_address_pool_id = azurerm_lb_backend_address_pool.main.id
 }
 
+resource "azurerm_lb_rule" "main" {
+  resource_group_name            = azurerm_resource_group.main.name
+  loadbalancer_id                = azurerm_lb.main.id
+  name                           = "HTTP"
+  protocol                       = "Tcp"
+  frontend_port                  = 80
+  backend_port                   = 8080
+  frontend_ip_configuration_name = azurerm_lb.main.frontend_ip_configuration[0].name
+  probe_id                       = azurerm_lb_probe.main.id
+  backend_address_pool_id        = azurerm_lb_backend_address_pool.main.id
+}
 
 resource "azurerm_availability_set" "main" {
   name                        = "${var.prefix}-aset"
