@@ -175,5 +175,5 @@ resource "azurerm_virtual_machine_data_disk_attachment" "main" {
 
 output "lb_url" {
   value       = "http://${azurerm_public_ip.main.ip_address}/"
-  description = "The IP of the Load Balancer"
+  description = "This is the URL for the LB."
 }
