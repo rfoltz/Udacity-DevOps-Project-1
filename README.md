@@ -27,6 +27,7 @@ This project will deploy a set number of virtual machines (default is 3) behind 
 - ARM_CLIENT_ID
 - ARM_CLIENT_SECRET
 - ARM_SUBSCRIPTION_ID
+- ARM_TENANT_ID
 
 These variables are used to connect to your subscription on Azure. Below are examples of adding enviroment variables to your terminal and os of choice.
 
@@ -40,9 +41,9 @@ Example: `export ARM_CLIENT_ID='0000000-0000-0000-0000-000000000000'`
 Example: `ARM_CLIENT_ID='0000000-0000-0000-0000-000000000000'`
 
 
-*Note:* These variables are only there for the live time of the terminal if you would like to make thme permant you will have to look up the documentation for your operating system.
+*Note:* These variables are only there for the life time of the terminal if you would like to make thme permant you will have to look up the documentation for your operating system.
  
-4. Once all of the above steps are completed you can now run the command `packer build` to build your server image. This may take a while so grab a cup of tea.
+4. Once all of the above steps are completed you can now run the command `packer build server.json` to build your server image. This may take a while so grab a cup of tea.
 
 ### Terraform
 The terraform file creates these resources listed below
@@ -71,7 +72,7 @@ The terraform file creates these resources listed below
 
 
 ## Output
-The following will be output by terraform if you have never deployed these resources before.
+The following will be output by terraform if you have executed the `terraform plan` and the same output will be made when using the `terraform apply`.
 ```
 An execution plan has been generated and is shown below.
 Resource actions are indicated with the following symbols:
@@ -82,21 +83,18 @@ Terraform will perform the following actions:
   # azurerm_availability_set.main will be created
   + resource "azurerm_availability_set" "main" {
       + id                           = (known after apply)
-      + location                     = "canadaeast"
+      + location                     = "canadacentral"
       + managed                      = true
       + name                         = "udacity-pg-aset"
-      + platform_fault_domain_count  = 3
+      + platform_fault_domain_count  = 2
       + platform_update_domain_count = 5
       + resource_group_name          = "udacity-project1-rg"
-      + tags                         = {
-          + "environment" = "Production"
-        }
     }
 
   # azurerm_lb.main will be created
   + resource "azurerm_lb" "main" {
       + id                   = (known after apply)
-      + location             = "westus"
+      + location             = "canadacentral"
       + name                 = "udacity-pg-lb"
       + private_ip_address   = (known after apply)
       + private_ip_addresses = (known after apply)
@@ -128,6 +126,38 @@ Terraform will perform the following actions:
       + resource_group_name       = "udacity-project1-rg"
     }
 
+  # azurerm_lb_probe.main will be created
+  + resource "azurerm_lb_probe" "main" {
+      + id                  = (known after apply)
+      + interval_in_seconds = 15
+      + load_balancer_rules = (known after apply)
+      + loadbalancer_id     = (known after apply)
+      + name                = "http-server-probe"
+      + number_of_probes    = 2
+      + port                = 8080
+      + protocol            = (known after apply)
+      + resource_group_name = "udacity-project1-rg"
+    }
+
+  # azurerm_lb_rule.main will be created
+  + resource "azurerm_lb_rule" "main" {
+      + backend_address_pool_id        = (known after apply)
+      + backend_port                   = 8080
+      + disable_outbound_snat          = false
+      + enable_floating_ip             = false
+      + frontend_ip_configuration_id   = (known after apply)
+      + frontend_ip_configuration_name = "PublicIPAddress"
+      + frontend_port                  = 80
+      + id                             = (known after apply)
+      + idle_timeout_in_minutes        = (known after apply)
+      + load_distribution              = (known after apply)
+      + loadbalancer_id                = (known after apply)
+      + name                           = "HTTP"
+      + probe_id                       = (known after apply)
+      + protocol                       = "Tcp"
+      + resource_group_name            = "udacity-project1-rg"
+    }
+
   # azurerm_linux_virtual_machine.main[0] will be created
   + resource "azurerm_linux_virtual_machine" "main" {
       + admin_password                  = (sensitive value)
@@ -138,7 +168,7 @@ Terraform will perform the following actions:
       + disable_password_authentication = false
       + extensions_time_budget          = "PT1H30M"
       + id                              = (known after apply)
-      + location                        = "canadaeast"
+      + location                        = "canadacentral"
       + max_bid_price                   = -1
       + name                            = "udacity-pg-0-vm"
       + network_interface_ids           = (known after apply)
@@ -150,7 +180,11 @@ Terraform will perform the following actions:
       + public_ip_addresses             = (known after apply)
       + resource_group_name             = "udacity-project1-rg"
       + size                            = "Standard_B1ls"
-      + source_image_id                 = "/subscriptions/d5e2b852-260c-4bdf-befb-9803d0d29cde/resourceGroups/udacity-project1-rg/providers/Microsoft.Compute/images/udacity-server-image"
+      + source_image_id                 = "/subscriptions/d5e2b852-260c-4bdf-befb-9803d0d29cde/resourceGroups/udacity-image-rg/providers/Microsoft.Compute/images/udacity-server-image"
+      + tags                            = {
+          + "environment"  = "dev"
+          + "project-name" = "Deploying a Web Server in Azure"
+        }
       + virtual_machine_id              = (known after apply)
       + zone                            = (known after apply)
 
@@ -173,7 +207,7 @@ Terraform will perform the following actions:
       + disable_password_authentication = false
       + extensions_time_budget          = "PT1H30M"
       + id                              = (known after apply)
-      + location                        = "canadaeast"
+      + location                        = "canadacentral"
       + max_bid_price                   = -1
       + name                            = "udacity-pg-1-vm"
       + network_interface_ids           = (known after apply)
@@ -185,7 +219,11 @@ Terraform will perform the following actions:
       + public_ip_addresses             = (known after apply)
       + resource_group_name             = "udacity-project1-rg"
       + size                            = "Standard_B1ls"
-      + source_image_id                 = "/subscriptions/d5e2b852-260c-4bdf-befb-9803d0d29cde/resourceGroups/udacity-project1-rg/providers/Microsoft.Compute/images/udacity-server-image"
+      + source_image_id                 = "/subscriptions/d5e2b852-260c-4bdf-befb-9803d0d29cde/resourceGroups/udacity-image-rg/providers/Microsoft.Compute/images/udacity-server-image"
+      + tags                            = {
+          + "environment"  = "dev"
+          + "project-name" = "Deploying a Web Server in Azure"
+        }
       + virtual_machine_id              = (known after apply)
       + zone                            = (known after apply)
 
@@ -208,7 +246,7 @@ Terraform will perform the following actions:
       + disable_password_authentication = false
       + extensions_time_budget          = "PT1H30M"
       + id                              = (known after apply)
-      + location                        = "canadaeast"
+      + location                        = "canadacentral"
       + max_bid_price                   = -1
       + name                            = "udacity-pg-2-vm"
       + network_interface_ids           = (known after apply)
@@ -220,7 +258,11 @@ Terraform will perform the following actions:
       + public_ip_addresses             = (known after apply)
       + resource_group_name             = "udacity-project1-rg"
       + size                            = "Standard_B1ls"
-      + source_image_id                 = "/subscriptions/d5e2b852-260c-4bdf-befb-9803d0d29cde/resourceGroups/udacity-project1-rg/providers/Microsoft.Compute/images/udacity-server-image"
+      + source_image_id                 = "/subscriptions/d5e2b852-260c-4bdf-befb-9803d0d29cde/resourceGroups/udacity-image-rg/providers/Microsoft.Compute/images/udacity-server-image"
+      + tags                            = {
+          + "environment"  = "dev"
+          + "project-name" = "Deploying a Web Server in Azure"
+        }
       + virtual_machine_id              = (known after apply)
       + zone                            = (known after apply)
 
@@ -240,7 +282,7 @@ Terraform will perform the following actions:
       + disk_mbps_read_write = (known after apply)
       + disk_size_gb         = 1
       + id                   = (known after apply)
-      + location             = "canadaeast"
+      + location             = "canadacentral"
       + name                 = "data-disk-0"
       + resource_group_name  = "udacity-project1-rg"
       + source_uri           = (known after apply)
@@ -254,7 +296,7 @@ Terraform will perform the following actions:
       + disk_mbps_read_write = (known after apply)
       + disk_size_gb         = 1
       + id                   = (known after apply)
-      + location             = "canadaeast"
+      + location             = "canadacentral"
       + name                 = "data-disk-1"
       + resource_group_name  = "udacity-project1-rg"
       + source_uri           = (known after apply)
@@ -268,38 +310,11 @@ Terraform will perform the following actions:
       + disk_mbps_read_write = (known after apply)
       + disk_size_gb         = 1
       + id                   = (known after apply)
-      + location             = "canadaeast"
+      + location             = "canadacentral"
       + name                 = "data-disk-2"
       + resource_group_name  = "udacity-project1-rg"
       + source_uri           = (known after apply)
       + storage_account_type = "Standard_LRS"
-    }
-
-  # azurerm_network_interface.lb will be created
-  + resource "azurerm_network_interface" "lb" {
-      + applied_dns_servers           = (known after apply)
-      + dns_servers                   = (known after apply)
-      + enable_accelerated_networking = false
-      + enable_ip_forwarding          = false
-      + id                            = (known after apply)
-      + internal_dns_name_label       = (known after apply)
-      + internal_domain_name_suffix   = (known after apply)
-      + location                      = "canadaeast"
-      + mac_address                   = (known after apply)
-      + name                          = "udacity-pg-nic"
-      + private_ip_address            = (known after apply)
-      + private_ip_addresses          = (known after apply)
-      + resource_group_name           = "udacity-project1-rg"
-      + virtual_machine_id            = (known after apply)
-
-      + ip_configuration {
-          + name                          = "internal"
-          + primary                       = true
-          + private_ip_address            = (known after apply)
-          + private_ip_address_allocation = "dynamic"
-          + private_ip_address_version    = "IPv4"
-          + subnet_id                     = (known after apply)
-        }
     }
 
   # azurerm_network_interface.main[0] will be created
@@ -311,7 +326,7 @@ Terraform will perform the following actions:
       + id                            = (known after apply)
       + internal_dns_name_label       = (known after apply)
       + internal_domain_name_suffix   = (known after apply)
-      + location                      = "canadaeast"
+      + location                      = "canadacentral"
       + mac_address                   = (known after apply)
       + name                          = "udacity-pg-0-nic"
       + private_ip_address            = (known after apply)
@@ -338,7 +353,7 @@ Terraform will perform the following actions:
       + id                            = (known after apply)
       + internal_dns_name_label       = (known after apply)
       + internal_domain_name_suffix   = (known after apply)
-      + location                      = "canadaeast"
+      + location                      = "canadacentral"
       + mac_address                   = (known after apply)
       + name                          = "udacity-pg-1-nic"
       + private_ip_address            = (known after apply)
@@ -365,7 +380,7 @@ Terraform will perform the following actions:
       + id                            = (known after apply)
       + internal_dns_name_label       = (known after apply)
       + internal_domain_name_suffix   = (known after apply)
-      + location                      = "canadaeast"
+      + location                      = "canadacentral"
       + mac_address                   = (known after apply)
       + name                          = "udacity-pg-2-nic"
       + private_ip_address            = (known after apply)
@@ -383,77 +398,49 @@ Terraform will perform the following actions:
         }
     }
 
-  # azurerm_network_interface_backend_address_pool_association.main will be created
+  # azurerm_network_interface_backend_address_pool_association.main[0] will be created
   + resource "azurerm_network_interface_backend_address_pool_association" "main" {
       + backend_address_pool_id = (known after apply)
       + id                      = (known after apply)
-      + ip_configuration_name   = "nic-to-backend-pool"
+      + ip_configuration_name   = "internal"
+      + network_interface_id    = (known after apply)
+    }
+
+  # azurerm_network_interface_backend_address_pool_association.main[1] will be created
+  + resource "azurerm_network_interface_backend_address_pool_association" "main" {
+      + backend_address_pool_id = (known after apply)
+      + id                      = (known after apply)
+      + ip_configuration_name   = "internal"
+      + network_interface_id    = (known after apply)
+    }
+
+  # azurerm_network_interface_backend_address_pool_association.main[2] will be created
+  + resource "azurerm_network_interface_backend_address_pool_association" "main" {
+      + backend_address_pool_id = (known after apply)
+      + id                      = (known after apply)
+      + ip_configuration_name   = "internal"
       + network_interface_id    = (known after apply)
     }
 
   # azurerm_network_security_group.main will be created
   + resource "azurerm_network_security_group" "main" {
       + id                  = (known after apply)
-      + location            = "canadaeast"
+      + location            = "canadacentral"
       + name                = "udacity-pg-nsg"
       + resource_group_name = "udacity-project1-rg"
       + security_rule       = [
           + {
               + access                                     = "Allow"
               + description                                = ""
-              + destination_address_prefix                 = ""
-              + destination_address_prefixes               = [
-                  + "10.0.2.0/24",
-                ]
-              + destination_application_security_group_ids = []
-              + destination_port_range                     = "*"
-              + destination_port_ranges                    = []
-              + direction                                  = "Inbound"
-              + name                                       = "Internal_In"
-              + priority                                   = 100
-              + protocol                                   = "*"
-              + source_address_prefix                      = ""
-              + source_address_prefixes                    = [
-                  + "10.0.2.0/24",
-                ]
-              + source_application_security_group_ids      = []
-              + source_port_range                          = "*"
-              + source_port_ranges                         = []
-            },
-          + {
-              + access                                     = "Allow"
-              + description                                = ""
-              + destination_address_prefix                 = ""
-              + destination_address_prefixes               = [
-                  + "10.0.2.0/24",
-                ]
-              + destination_application_security_group_ids = []
-              + destination_port_range                     = "*"
-              + destination_port_ranges                    = []
-              + direction                                  = "Outbound"
-              + name                                       = "Internal_Out"
-              + priority                                   = 110
-              + protocol                                   = "*"
-              + source_address_prefix                      = ""
-              + source_address_prefixes                    = [
-                  + "10.0.2.0/24",
-                ]
-              + source_application_security_group_ids      = []
-              + source_port_range                          = "*"
-              + source_port_ranges                         = []
-            },
-          + {
-              + access                                     = "Deny"
-              + description                                = ""
               + destination_address_prefix                 = "*"
               + destination_address_prefixes               = []
               + destination_application_security_group_ids = []
-              + destination_port_range                     = "*"
+              + destination_port_range                     = "8080"
               + destination_port_ranges                    = []
               + direction                                  = "Inbound"
-              + name                                       = "Deny_External"
-              + priority                                   = 120
-              + protocol                                   = "*"
+              + name                                       = "HTTP"
+              + priority                                   = 100
+              + protocol                                   = "Tcp"
               + source_address_prefix                      = "*"
               + source_address_prefixes                    = []
               + source_application_security_group_ids      = []
@@ -461,9 +448,6 @@ Terraform will perform the following actions:
               + source_port_ranges                         = []
             },
         ]
-      + tags                = {
-          + "environment" = "Production"
-        }
     }
 
   # azurerm_public_ip.main will be created
@@ -474,19 +458,16 @@ Terraform will perform the following actions:
       + idle_timeout_in_minutes = 4
       + ip_address              = (known after apply)
       + ip_version              = "IPv4"
-      + location                = "canadaeast"
+      + location                = "canadacentral"
       + name                    = "lb-public-ip"
       + resource_group_name     = "udacity-project1-rg"
       + sku                     = "Basic"
-      + tags                    = {
-          + "environment" = "Production"
-        }
     }
 
   # azurerm_resource_group.main will be created
   + resource "azurerm_resource_group" "main" {
       + id       = (known after apply)
-      + location = "canadaeast"
+      + location = "canadacentral"
       + name     = "udacity-project1-rg"
     }
 
@@ -502,6 +483,13 @@ Terraform will perform the following actions:
       + name                                           = "internal"
       + resource_group_name                            = "udacity-project1-rg"
       + virtual_network_name                           = "udacity-pg-network"
+    }
+
+  # azurerm_subnet_network_security_group_association.main will be created
+  + resource "azurerm_subnet_network_security_group_association" "main" {
+      + id                        = (known after apply)
+      + network_security_group_id = (known after apply)
+      + subnet_id                 = (known after apply)
     }
 
   # azurerm_virtual_machine_data_disk_attachment.main[0] will be created
@@ -544,12 +532,12 @@ Terraform will perform the following actions:
         ]
       + guid                  = (known after apply)
       + id                    = (known after apply)
-      + location              = "canadaeast"
+      + location              = "canadacentral"
       + name                  = "udacity-pg-network"
       + resource_group_name   = "udacity-project1-rg"
       + subnet                = (known after apply)
       + vm_protection_enabled = false
     }
 
-Plan: 22 to add, 0 to change, 0 to destroy.
+Plan: 26 to add, 0 to change, 0 to destroy.
 ```

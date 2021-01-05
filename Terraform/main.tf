@@ -19,8 +19,7 @@ resource "azurerm_network_security_group" "main" {
   location            = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
 
-  #there are already rules by default to allow traffic to the internal VM's.
-
+  //Add a security rule for the VM's to recieve HTTP data on port 8080.
   security_rule {
     name                       = "HTTP"
     priority                   = 100
@@ -107,6 +106,7 @@ resource "azurerm_network_interface_backend_address_pool_association" "main" {
   backend_address_pool_id = azurerm_lb_backend_address_pool.main.id
 }
 
+//Create a rule for the LB to route traffic from the 80 port to the backend 8080 port on each VM
 resource "azurerm_lb_rule" "main" {
   resource_group_name            = azurerm_resource_group.main.name
   loadbalancer_id                = azurerm_lb.main.id
